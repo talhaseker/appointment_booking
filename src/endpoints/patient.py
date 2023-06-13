@@ -5,10 +5,10 @@ from src.models import Patient
 from webargs import fields
 from webargs.flaskparser import use_args
 
-patient = Blueprint('/patient', __name__)
+patient_bp = Blueprint('patient', __name__, url_prefix="/patient")
 
 
-@patient.route('/register', methods=['POST'])
+@patient_bp.route('/register', methods=['POST'])
 @use_args({'name': fields.String(), 'email': fields.String(), 'password': fields.String()})
 def register_patient(args):
     name = args.get('name')
@@ -29,7 +29,7 @@ def register_patient(args):
     return jsonify(resp), HTTPStatus.CREATED
 
 
-@patient.route('/login', methods=['POST'])
+@patient_bp.route('/login', methods=['POST'])
 @use_args({'email': fields.String(), 'password': fields.String()})
 def login_patient(args):
     email = args.get('email')

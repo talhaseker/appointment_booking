@@ -6,19 +6,19 @@ from src.models import Appointment, Doctor, Patient, WorkingHours
 from webargs import fields
 from webargs.flaskparser import use_args
 
-appointments = Blueprint('/appointments', __name__)
+appointments = Blueprint('/appointments', __name__, url_prefix="/appointments")
 
 
 @appointments.route('/', methods=['POST'])
 @use_args({'patient_id': fields.Int(), 'doctor_id': fields.Int(),
            'start_time': fields.String(), 'end_time': fields.String()})
 def create_appointment(args):
-
+    print(args)
     patient_id = args.get('patient_id')
     doctor_id = args.get('doctor_id')
     start_time = datetime.strptime(args.get('start_time'), '%Y-%m-%d %H:%M:%S')
     end_time = datetime.strptime(args.get('end_time'), '%Y-%m-%d %H:%M:%S')
-
+    print(start_time.weekday())
     # Check if the patient exists
     patient = Patient.query.get(doctor_id)
     if not patient:
@@ -32,14 +32,14 @@ def create_appointment(args):
     # Check if the doctor works on those hours.
     working_hours = WorkingHours.query.filter(
         WorkingHours.day_of_week == start_time.weekday(),
-        WorkingHours.start_time <= start_time,
-        WorkingHours.end_time >= end_time
+        WorkingHours.start_time <= start_time.time(),
+        WorkingHours.end_time >= end_time.time()
     ).first()
     if not working_hours:
         return jsonify({"error": "Doctor is not available at that time!"}), HTTPStatus.NOT_FOUND
 
     # Check if the appointment time conflicts with existing appointments
-    if db.session.query(Appointment).query.filter(
+    if db.session.query(Appointment).filter(
         Appointment.doctor_id == doctor_id,
         Appointment.start_time < end_time, Appointment.end_time > start_time
     ).first():

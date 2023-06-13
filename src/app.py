@@ -1,19 +1,29 @@
 from flask import Flask
 import iniconfig
+from datetime import time
 from src.extensions import db
 from src.endpoints.appointments import appointments
-from src.endpoints.patient import patient
+from src.endpoints.patient import patient_bp
 from src.endpoints.home import home
-from src.models import Doctor
+from src.models import Doctor, WorkingHours
 
 
 def integrate_doctors_data():
     for name in ["Strange", "Who"]:
-        doc = Doctor.query.filter_by(name=name)
+        doc = db.session.query(Doctor).filter_by(name=name).first()
         if not doc:
-            db.session.add(Doctor(name=name))
+            doc = Doctor(name=name)
+            db.session.add(doc)
             db.session.commit()
-
+            wh = WorkingHours(doctor_id=doc.id, day_of_week=0, start_time=time(hour=8), end_time=time(hour=17))
+            db.session.add(wh)
+            wh = WorkingHours(doctor_id=doc.id, day_of_week=1, start_time=time(hour=8), end_time=time(hour=17))
+            db.session.add(wh)
+            wh = WorkingHours(doctor_id=doc.id, day_of_week=2, start_time=time(hour=8), end_time=time(hour=17))
+            db.session.add(wh)
+            wh = WorkingHours(doctor_id=doc.id, day_of_week=3, start_time=time(hour=8), end_time=time(hour=17))
+            db.session.add(wh)
+            db.session.commit()
 
 def create_app():
     ini = iniconfig.IniConfig("../app.ini")
@@ -28,6 +38,9 @@ def create_app():
         integrate_doctors_data()
 
     app.register_blueprint(home)
-    app.register_blueprint(patient)
+    app.register_blueprint(patient_bp)
     app.register_blueprint(appointments)
+
+    # print(app.url_map)
+
     return app
